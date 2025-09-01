@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'web-notification-server',
-    script: './packages/server/dist/index.js',
+    script: './server/dist/index.js',
     cwd: '/data/web-notification',
     instances: 1,
     exec_mode: 'cluster',
