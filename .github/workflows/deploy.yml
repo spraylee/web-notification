@@ -1,0 +1,199 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter server run db:generate
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Create deployment archives
+        run: |
+          # 创建服务端部署包
+          cd packages/server
+          tar -czf ../../server-deploy.tar.gz dist/ node_modules/ package.json prisma/ .env.example
+          cd ../..
+          
+          # 创建 Web 前端部署包
+          cd packages/web/dist
+          tar -czf ../../../web-deploy.tar.gz .
+          cd ../../..
+          
+          # 创建 Admin 前端部署包
+          cd packages/admin/dist
+          tar -czf ../../../admin-deploy.tar.gz .
+          cd ../../..
+
+      - name: Prepare server directory
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            # 创建部署目录
+            mkdir -p /data/web-notification/server
+            mkdir -p /data/web-notification/web
+            mkdir -p /data/web-notification/admin
+            
+            # 停止现有服务（如果运行中）
+            pm2 stop web-notification-server || true
+
+      - name: Copy server files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          source: "server-deploy.tar.gz"
+          target: "/data/web-notification/"
+
+      - name: Copy web files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          source: "web-deploy.tar.gz"
+          target: "/data/web-notification/"
+
+      - name: Copy admin files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          source: "admin-deploy.tar.gz"
+          target: "/data/web-notification/"
+
+      - name: Copy nginx config to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          source: "nginx.conf"
+          target: "/data/web-notification/"
+
+      - name: Copy PM2 config to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          source: "ecosystem.config.js"
+          target: "/data/web-notification/"
+
+      - name: Extract and setup files
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            cd /data/web-notification
+            
+            # 解压服务端文件
+            cd server
+            tar -xzf ../server-deploy.tar.gz
+            cd ..
+            
+            # 解压前端文件
+            cd web
+            rm -rf * || true
+            tar -xzf ../web-deploy.tar.gz
+            cd ..
+            
+            # 解压管理端文件
+            cd admin
+            rm -rf * || true
+            tar -xzf ../admin-deploy.tar.gz
+            cd ..
+            
+            # 清理压缩包
+            rm -f server-deploy.tar.gz web-deploy.tar.gz admin-deploy.tar.gz
+
+      - name: Setup environment and start server
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            cd /data/web-notification/server
+            
+            # 设置环境变量
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+            echo "VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}" >> .env
+            echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> .env
+            echo "NODE_ENV=production" >> .env
+            echo "PORT=10901" >> .env
+            
+            # 运行数据库迁移
+            npx prisma db push --accept-data-loss || true
+            
+            # 创建日志目录
+            mkdir -p /data/web-notification/logs
+            
+            # 使用 PM2 配置文件启动/重启服务
+            cd /data/web-notification
+            pm2 restart ecosystem.config.js --update-env || pm2 start ecosystem.config.js
+            pm2 save
+
+      - name: Reload nginx
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT || 22 }}
+          script: |
+            # 检查 nginx 配置
+            nginx -t
+            # 重新加载 nginx
+            nginx -s reload || systemctl reload nginx
