@@ -30,8 +30,8 @@ pnpm dev
 ## 📱 项目结构
 
 - **packages/web** - 用户端 React 应用 (端口: 5173)
-- **packages/admin** - 管理端 React 应用 (端口: 5174) 
-- **packages/server** - Node.js 后端服务 (端口: 3001)
+- **packages/admin** - 管理端 React 应用 (端口: 5174)
+- **packages/server** - Node.js 后端服务 (端口: 10901)
 
 ## 🛠 技术栈
 
@@ -55,4 +55,4 @@ pnpm dev
 
 - Web 用户端: http://localhost:5173
 - 管理端: http://localhost:5174
-- 后端 API: http://localhost:3001
+- 后端 API: http://localhost:10901

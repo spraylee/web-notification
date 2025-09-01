@@ -5,6 +5,7 @@
 ### 1. 订阅失败 - "Registration failed - push service error"
 
 **问题原因：**
+
 - Service Worker 注册失败
 - 浏览器通知权限被拒绝
 - VAPID 密钥配置错误
@@ -39,6 +40,7 @@
 **症状：** 权限状态显示"已拒绝"或"待授权"
 
 **解决方案：**
+
 1. **手动重置权限**
    - Chrome: 设置 -> 隐私设置和安全性 -> 网站设置 -> 通知
    - Firefox: 设置 -> 隐私与安全 -> 权限 -> 通知
@@ -53,7 +55,9 @@
 **症状：** SW 注册失败或无法找到 `/sw.js`
 
 **解决方案：**
+
 1. **检查文件路径**
+
    ```bash
    # 确保文件存在
    ls packages/web/public/sw.js
@@ -66,8 +70,8 @@
 3. **重新注册 SW**
    ```javascript
    // 在开发者工具 Console 中执行
-   navigator.serviceWorker.getRegistrations().then(function(registrations) {
-     for(let registration of registrations) {
+   navigator.serviceWorker.getRegistrations().then(function (registrations) {
+     for (let registration of registrations) {
        registration.unregister();
      }
    });
@@ -78,9 +82,11 @@
 **症状：** 订阅数据无法发送到服务器
 
 **解决方案：**
+
 1. **检查后端服务状态**
+
    ```bash
-   curl http://localhost:3001/health
+   curl http://localhost:10901/health
    # 应该返回: {"status":"ok","timestamp":"..."}
    ```
 
@@ -94,7 +100,9 @@
 **症状：** "Vapid public key should be 65 bytes long when decoded"
 
 **解决方案：**
+
 1. **重新生成密钥**
+
    ```bash
    cd packages/server
    pnpm tsx src/generate-vapid-keys.ts
@@ -124,6 +132,7 @@
 ### 逐步测试
 
 1. **基础功能测试**
+
    ```javascript
    // 在 Console 中测试
    console.log('SW支持:', 'serviceWorker' in navigator);
@@ -133,9 +142,10 @@
    ```
 
 2. **手动权限请求**
+
    ```javascript
    // 在 Console 中执行
-   Notification.requestPermission().then(permission => {
+   Notification.requestPermission().then((permission) => {
      console.log('权限结果:', permission);
    });
    ```
@@ -145,7 +155,7 @@
    // 在权限授予后测试
    new Notification('测试通知', {
      body: '如果看到这个，说明通知功能正常',
-     icon: '/icon.svg'
+     icon: '/icon.svg',
    });
    ```
 

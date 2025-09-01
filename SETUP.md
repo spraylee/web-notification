@@ -48,6 +48,7 @@ pnpm db:push
 ### 3. 更新前端 VAPID 公钥
 
 复制生成的 `VAPID_PUBLIC_KEY` 到：
+
 - `packages/web/src/hooks/usePushNotification.ts` 文件中的 `VAPID_PUBLIC_KEY` 常量
 
 ### 4. 启动所有服务
@@ -60,13 +61,14 @@ pnpm dev
 ```
 
 这会启动：
+
 - Web 用户端: http://localhost:5173
-- Admin 管理端: http://localhost:5174  
-- Server 后端: http://localhost:3001
+- Admin 管理端: http://localhost:5174
+- Server 后端: http://localhost:10901
 
 ### 5. 使用说明
 
-1. **用户端** (http://localhost:5173): 
+1. **用户端** (http://localhost:5173):
    - 用户可以订阅推送通知
    - 接收来自管理端发送的通知
 
@@ -75,9 +77,9 @@ pnpm dev
    - 发送推送通知给所有订阅用户
    - 查看通知历史记录
 
-3. **后端 API** (http://localhost:3001):
-   - tRPC API 端点: http://localhost:3001/trpc
-   - 健康检查: http://localhost:3001/health
+3. **后端 API** (http://localhost:10901):
+   - tRPC API 端点: http://localhost:10901/trpc
+   - 健康检查: http://localhost:10901/health
 
 ## 技术栈
 
@@ -93,7 +95,7 @@ pnpm dev
 ```bash
 # 单独启动某个服务
 pnpm web:dev    # 启动用户端
-pnpm admin:dev  # 启动管理端  
+pnpm admin:dev  # 启动管理端
 pnpm server:dev # 启动后端服务
 
 # 构建所有项目
