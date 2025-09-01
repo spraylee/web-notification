@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 export function NotificationManager() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [icon, setIcon] = useState('/icon-192x192.png');
+  const [icon, setIcon] = useState('/icon-192x192.svg');
 
   const { data: notifications, refetch } = trpc.notification.list.useQuery();
   const { data: subscriptions } = trpc.subscription.list.useQuery();
