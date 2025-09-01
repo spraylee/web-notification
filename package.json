@@ -1,0 +1,22 @@
+{
+  "name": "web-notification",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web push notification demo with monorepo structure",
+  "scripts": {
+    "dev": "pnpm --parallel run dev",
+    "build": "pnpm --recursive run build",
+    "clean": "pnpm --recursive run clean",
+    "format": "prettier --write .",
+    "web:dev": "pnpm --filter web dev",
+    "admin:dev": "pnpm --filter admin dev --port 5174",
+    "server:dev": "pnpm --filter server dev"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
