@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { usePushNotification } from '../hooks/usePushNotification';
 
 export function PushNotificationDemo() {

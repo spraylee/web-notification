@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { trpc } from '../lib/trpc-client';
+import { trpc, trpcClient } from '../lib/trpc-client';
 import type { PushSubscriptionData } from '../types';
 
 const VAPID_PUBLIC_KEY =
@@ -144,12 +144,26 @@ export function usePushNotification() {
   const unsubscribe = async () => {
     if (subscription) {
       try {
+        // 1. 从浏览器取消订阅
         await subscription.unsubscribe();
+        
+        // 2. 通知服务端删除订阅记录
+        try {
+          await trpcClient.subscription.delete.mutate({
+            endpoint: subscription.endpoint
+          });
+        } catch (serverError) {
+          console.warn('服务端删除订阅记录失败，但本地取消订阅成功:', serverError);
+        }
+        
         setSubscription(null);
         setIsSubscribed(false);
         console.log('已取消订阅');
       } catch (error) {
         console.error('取消订阅时出错:', error);
+        // 即使服务端删除失败，也要更新本地状态
+        setSubscription(null);
+        setIsSubscribed(false);
       }
     }
   };

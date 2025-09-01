@@ -63,8 +63,17 @@ export const notificationRouter = router({
             payload
           );
           return { success: true, endpoint: sub.endpoint };
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to send notification:', error);
+          
+          // 如果是订阅无效错误（410 Gone 或 400 Bad Request），标记为无效
+          if (error.statusCode === 410 || error.statusCode === 400) {
+            await ctx.prisma.pushSubscription.update({
+              where: { endpoint: sub.endpoint },
+              data: { isActive: false }
+            });
+          }
+          
           return { success: false, endpoint: sub.endpoint, error };
         }
       });
@@ -124,8 +133,17 @@ export const notificationRouter = router({
             payload
           );
           return { success: true, endpoint: sub.endpoint };
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to send notification:', error);
+          
+          // 如果是订阅无效错误（410 Gone 或 400 Bad Request），标记为无效
+          if (error.statusCode === 410 || error.statusCode === 400) {
+            await ctx.prisma.pushSubscription.update({
+              where: { endpoint: sub.endpoint },
+              data: { isActive: false }
+            });
+          }
+          
           return { success: false, endpoint: sub.endpoint, error };
         }
       });
