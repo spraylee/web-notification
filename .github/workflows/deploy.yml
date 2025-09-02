@@ -44,22 +44,24 @@ jobs:
       - name: Build all packages
         run: pnpm run build
 
-      - name: Create deployment archives
+      - name: Create deployment archive
         run: |
-          # 创建服务端部署包
-          cd packages/server
-          tar -czf ../../server-deploy.tar.gz dist/ package.json prisma/ .env.example
-          cd ../..
-
-          # 创建 Web 前端部署包
-          cd packages/web/dist
-          tar -czf ../../../web-deploy.tar.gz .
-          cd ../../..
-
-          # 创建 Admin 前端部署包
-          cd packages/admin/dist
-          tar -czf ../../../admin-deploy.tar.gz .
-          cd ../../..
+          # 创建统一部署包
+          mkdir -p deploy-temp/server deploy-temp/web deploy-temp/admin
+          
+          # 复制服务端文件
+          cp -r packages/server/dist packages/server/package.json packages/server/prisma packages/server/.env.example deploy-temp/server/
+          
+          # 复制前端文件
+          cp -r packages/web/dist/* deploy-temp/web/
+          cp -r packages/admin/dist/* deploy-temp/admin/
+          
+          # 复制配置文件
+          cp nginx.conf ecosystem.config.js deploy-temp/
+          
+          # 打包所有文件
+          tar -czf deploy-all.tar.gz deploy-temp/
+          rm -rf deploy-temp/
 
       - name: Prepare server directory
         uses: appleboy/ssh-action@v1.1.0
@@ -77,54 +79,14 @@ jobs:
             # 停止现有服务（如果运行中）
             pm2 stop web-notification-server || true
 
-      - name: Copy server files to server
+      - name: Copy all files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT || 22 }}
-          source: 'server-deploy.tar.gz'
-          target: '/data/web-notification/'
-
-      - name: Copy web files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT || 22 }}
-          source: 'web-deploy.tar.gz'
-          target: '/data/web-notification/'
-
-      - name: Copy admin files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT || 22 }}
-          source: 'admin-deploy.tar.gz'
-          target: '/data/web-notification/'
-
-      - name: Copy nginx config to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT || 22 }}
-          source: 'nginx.conf'
-          target: '/data/web-notification/'
-
-      - name: Copy PM2 config to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT || 22 }}
-          source: 'ecosystem.config.js'
+          source: 'deploy-all.tar.gz'
           target: '/data/web-notification/'
 
       - name: Extract and setup files
@@ -137,25 +99,19 @@ jobs:
           script: |
             cd /data/web-notification
 
-            # 解压服务端文件
-            cd server
-            tar -xzf ../server-deploy.tar.gz
-            cd ..
+            # 解压所有文件
+            tar -xzf deploy-all.tar.gz
 
-            # 解压前端文件
-            cd web
-            rm -rf * || true
-            tar -xzf ../web-deploy.tar.gz
-            cd ..
+            # 移动文件到正确位置
+            rm -rf server/* web/* admin/* || true
+            mv deploy-temp/server/* server/
+            mv deploy-temp/web/* web/
+            mv deploy-temp/admin/* admin/
+            mv deploy-temp/nginx.conf ./
+            mv deploy-temp/ecosystem.config.js ./
 
-            # 解压管理端文件
-            cd admin
-            rm -rf * || true
-            tar -xzf ../admin-deploy.tar.gz
-            cd ..
-
-            # 清理压缩包
-            rm -f server-deploy.tar.gz web-deploy.tar.gz admin-deploy.tar.gz
+            # 清理临时文件
+            rm -rf deploy-temp/ deploy-all.tar.gz
 
       - name: Setup environment and start server
         uses: appleboy/ssh-action@v1.1.0
