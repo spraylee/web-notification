@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createHash } from 'crypto';
 import { publicProcedure, router } from '../trpc.js';
 import webpush from 'web-push';
 
@@ -9,6 +10,10 @@ const notificationSchema = z.object({
   badge: z.string().optional(),
   data: z.string().optional(),
 });
+
+function generateEndpointHash(endpoint: string): string {
+  return createHash('sha256').update(endpoint).digest('hex');
+}
 
 export const notificationRouter = router({
   create: publicProcedure
@@ -68,8 +73,9 @@ export const notificationRouter = router({
           
           // 如果是订阅无效错误（410 Gone 或 400 Bad Request），标记为无效
           if (error.statusCode === 410 || error.statusCode === 400) {
+            const endpointHash = generateEndpointHash(sub.endpoint);
             await ctx.prisma.pushSubscription.update({
-              where: { endpoint: sub.endpoint },
+              where: { endpointHash },
               data: { isActive: false }
             });
           }
@@ -138,8 +144,9 @@ export const notificationRouter = router({
           
           // 如果是订阅无效错误（410 Gone 或 400 Bad Request），标记为无效
           if (error.statusCode === 410 || error.statusCode === 400) {
+            const endpointHash = generateEndpointHash(sub.endpoint);
             await ctx.prisma.pushSubscription.update({
-              where: { endpoint: sub.endpoint },
+              where: { endpointHash },
               data: { isActive: false }
             });
           }
