@@ -48,7 +48,7 @@ jobs:
         run: |
           # 创建服务端部署包
           cd packages/server
-          tar -czf ../../server-deploy.tar.gz dist/ node_modules/ package.json prisma/ .env.example
+          tar -czf ../../server-deploy.tar.gz dist/ package.json prisma/ .env.example
           cd ../..
 
           # 创建 Web 前端部署包
@@ -177,6 +177,12 @@ jobs:
             # 加载环境
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            # 安装生产依赖
+            npm install --omit=dev
+
+            # 生成 Prisma 客户端
+            npx prisma generate
 
             # 运行数据库迁移
             npx prisma db push --accept-data-loss || true
