@@ -128,10 +128,25 @@ export function usePushNotification() {
       setIsSubscribed(true);
 
       // 显示成功通知
-      new Notification('订阅成功!', {
-        body: '你已成功订阅推送通知',
-        icon: '/icon-192x192.svg',
-      });
+      try {
+        // 尝试通过 Service Worker 显示通知
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('订阅成功!', {
+          body: '你已成功订阅推送通知',
+          icon: '/icon-192x192.svg',
+          tag: 'subscription-success'
+        });
+      } catch (swError) {
+        // 降级到直接显示通知（适用于桌面浏览器）
+        try {
+          new Notification('订阅成功!', {
+            body: '你已成功订阅推送通知',
+            icon: '/icon-192x192.svg',
+          });
+        } catch (notificationError) {
+          console.warn('无法显示通知:', notificationError);
+        }
+      }
     } catch (error) {
       console.error('订阅推送通知时出错:', error);
       console.dir(error);

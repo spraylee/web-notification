@@ -11,17 +11,33 @@ export function PushNotificationDemo() {
     unsubscribe 
   } = usePushNotification();
 
-  const testLocalNotification = () => {
+  const testLocalNotification = async () => {
     if (permission !== 'granted') {
       alert('请先授予通知权限');
       return;
     }
     
-    new Notification('本地通知测试', {
-      body: '这是一个本地测试通知，用于验证通知功能是否正常',
-      icon: '/icon-192x192.svg',
-      tag: 'test-notification'
-    });
+    try {
+      // 尝试通过 Service Worker 显示通知
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('本地通知测试', {
+        body: '这是一个本地测试通知，用于验证通知功能是否正常',
+        icon: '/icon-192x192.svg',
+        tag: 'test-notification'
+      });
+    } catch (swError) {
+      // 降级到直接显示通知（适用于桌面浏览器）
+      try {
+        new Notification('本地通知测试', {
+          body: '这是一个本地测试通知，用于验证通知功能是否正常',
+          icon: '/icon-192x192.svg',
+          tag: 'test-notification'
+        });
+      } catch (notificationError) {
+        console.error('无法显示通知:', notificationError);
+        alert('通知显示失败，请检查浏览器设置');
+      }
+    }
   };
 
   if (!isSupported) {
