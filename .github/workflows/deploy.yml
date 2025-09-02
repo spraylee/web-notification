@@ -48,17 +48,17 @@ jobs:
         run: |
           # 创建统一部署包
           mkdir -p deploy-temp/server deploy-temp/web deploy-temp/admin
-          
+
           # 复制服务端文件
           cp -r packages/server/dist packages/server/package.json packages/server/prisma packages/server/.env.example deploy-temp/server/
-          
+
           # 复制前端文件
           cp -r packages/web/dist/* deploy-temp/web/
           cp -r packages/admin/dist/* deploy-temp/admin/
-          
+
           # 复制配置文件
           cp nginx.conf ecosystem.config.js deploy-temp/
-          
+
           # 打包所有文件
           tar -czf deploy-all.tar.gz deploy-temp/
           rm -rf deploy-temp/
@@ -131,14 +131,14 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            # 安装生产依赖 (使用 pnpm)
-            pnpm install --prod --frozen-lockfile
+            # 安装生产依赖 (优先使用 pnpm，失败则用 npm)
+            pnpm install --prod || npm install --omit=dev
 
             # 生成 Prisma 客户端
-            pnpm exec prisma generate
+            npx prisma generate
 
             # 运行数据库迁移
-            pnpm exec prisma db push --accept-data-loss
+            npx prisma db push --accept-data-loss
 
             # 创建日志目录
             mkdir -p /data/web-notification/logs
