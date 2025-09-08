@@ -32,8 +32,6 @@
 
 基于本项目的代码，完整的端到端数据流如下：
 
-![Web Push Data Flow](https://i.imgur.com/G328g6L.png)
-
 1.  **(前端) 注册 Service Worker**: 用户首次访问网站，客户端 JavaScript 通过 `navigator.serviceWorker.register('/service-worker.js')` 来注册 Service Worker。这个脚本将在后台运行，独立于网页。
 
 2.  **(前端) 请求权限与订阅**:
