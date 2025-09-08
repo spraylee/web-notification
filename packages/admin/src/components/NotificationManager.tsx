@@ -2,90 +2,29 @@ import React, { useState } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { NotificationEditor } from './NotificationEditor';
 import dayjs from 'dayjs';
 
 export function NotificationManager() {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [icon, setIcon] = useState('/icon-192x192.svg');
-
+  const [isEditorOpen, setEditorOpen] = useState(false);
   const { data: notifications, refetch } = trpc.notification.list.useQuery();
   const { data: subscriptions } = trpc.subscription.list.useQuery();
-  
-  const sendNotification = trpc.notification.sendToAll.useMutation({
-    onSuccess: () => {
-      setTitle('');
-      setBody('');
-      refetch();
-    },
-  });
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title && body) {
-      sendNotification.mutate({ title, body, icon });
-    }
+  const handleEditorClose = () => {
+    setEditorOpen(false);
+    refetch();
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">推送通知管理</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>发送新通知</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSend} className="space-y-4">
-              <div>
-                <Label htmlFor="title">标题</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="通知标题"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="body">内容</Label>
-                <Input
-                  id="body"
-                  type="text"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="通知内容"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="icon">图标 URL</Label>
-                <Input
-                  id="icon"
-                  type="text"
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
-                  placeholder="图标 URL"
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                disabled={sendNotification.isPending}
-                className="w-full"
-              >
-                {sendNotification.isPending ? '发送中...' : '发送通知'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">推送通知管理</h1>
+        <Button onClick={() => setEditorOpen(true)}>发送新通知</Button>
+      </div>
 
+      <NotificationEditor isOpen={isEditorOpen} onClose={handleEditorClose} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>订阅统计</CardTitle>
@@ -96,8 +35,9 @@ export function NotificationManager() {
                 活跃订阅: <span className="font-bold">{subscriptions?.length || 0}</span>
               </p>
               <p className="text-sm text-gray-600">
-                已发送通知: <span className="font-bold">
-                  {notifications?.filter(n => n.sent).length || 0}
+                已发送通知:{' '}
+                <span className="font-bold">
+                  {notifications?.filter((n) => n.sent).length || 0}
                 </span>
               </p>
             </div>
