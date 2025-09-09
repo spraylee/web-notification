@@ -10,24 +10,25 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
     "@tanstack/react-query": "^5.28.4",
     "@trpc/client": "^11.0.0-rc.364",
     "@trpc/react-query": "^11.0.0-rc.364",
     "dayjs": "^1.11.10",
-    "zod": "^3.22.4",
-    "react-router-dom": "^6.22.3"
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^6.22.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
-    "tailwindcss": "^3.4.1",
     "autoprefixer": "^10.4.18",
-    "postcss": "^8.4.35",
     "clsx": "^2.1.0",
+    "postcss": "^8.4.35",
     "tailwind-merge": "^2.2.2",
+    "tailwindcss": "^3.4.1",
     "typescript": "~5.8.3",
     "vite": "^5.0.0"
   }

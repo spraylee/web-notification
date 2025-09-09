@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TRPCProvider } from './lib/trpc-client';
 import { NotificationManager } from './components/NotificationManager';
 import { SubscriptionList } from './components/SubscriptionList';
+import { Toaster } from 'react-hot-toast';
 
 type Page = 'notifications' | 'subscriptions';
 
@@ -54,6 +55,12 @@ function App() {
           </div>
         </main>
       </div>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+        }}
+      />
     </TRPCProvider>
   );
 }

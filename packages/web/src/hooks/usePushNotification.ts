@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { trpc, trpcClient } from '../lib/trpc-client';
 import type { PushSubscriptionData } from '../types';
+import toast from 'react-hot-toast';
 
 const VAPID_PUBLIC_KEY =
   'BOSJUkRWhT0SI7gGN8CqZV3pi48voHpkQ1qdGeYm1ndAdm50u7dChXS_l7d4qFyYh0P9_7-YEcz7XJ1mDSCMmOM';
@@ -78,7 +79,7 @@ export function usePushNotification() {
 
   const subscribe = async () => {
     if (!isSupported) {
-      alert('你的浏览器不支持推送通知');
+      toast.error('你的浏览器不支持推送通知');
       return;
     }
 
@@ -91,12 +92,12 @@ export function usePushNotification() {
         setPermission(newPermission);
 
         if (newPermission !== 'granted') {
-          alert('需要授予通知权限才能订阅推送');
+          toast.error('需要授予通知权限才能订阅推送');
           setIsLoading(false);
           return;
         }
       } else if (permission === 'denied') {
-        alert('通知权限被拒绝，请在浏览器设置中启用通知权限');
+        toast.error('通知权限被拒绝，请在浏览器设置中启用通知权限');
         setIsLoading(false);
         return;
       }
@@ -126,6 +127,9 @@ export function usePushNotification() {
 
       setSubscription(sub);
       setIsSubscribed(true);
+      
+      // 显示成功toast
+      toast.success('推送通知订阅成功！');
 
       // 显示成功通知
       try {
@@ -150,7 +154,7 @@ export function usePushNotification() {
     } catch (error) {
       console.error('订阅推送通知时出错:', error);
       console.dir(error);
-      alert(`订阅失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      toast.error(`订阅失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
       setIsLoading(false);
     }
@@ -173,6 +177,7 @@ export function usePushNotification() {
 
         setSubscription(null);
         setIsSubscribed(false);
+        toast.success('已成功取消订阅');
         console.log('已取消订阅');
       } catch (error) {
         console.error('取消订阅时出错:', error);

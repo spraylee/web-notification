@@ -4,6 +4,7 @@ import { Dialog } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import toast from 'react-hot-toast';
 
 interface NotificationEditorProps {
   isOpen: boolean;
@@ -28,11 +29,11 @@ export function NotificationEditor({ isOpen, onClose, endpoint }: NotificationEd
 
   const sendNotification = trpc.notification.send.useMutation({
     onSuccess: (data) => {
-      alert(`通知发送成功: ${data.totalSent} 个成功, ${data.totalFailed} 个失败。`);
+      toast.success(`通知发送成功: ${data.totalSent} 个成功, ${data.totalFailed} 个失败。`);
       onClose();
     },
     onError: (error) => {
-      alert(`通知发送失败: ${error.message}`);
+      toast.error(`通知发送失败: ${error.message}`);
     },
   });
 

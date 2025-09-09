@@ -1,4 +1,5 @@
 import { usePushNotification } from '../hooks/usePushNotification';
+import toast from 'react-hot-toast';
 
 export function PushNotificationDemo() {
   const { 
@@ -13,7 +14,7 @@ export function PushNotificationDemo() {
 
   const testLocalNotification = async () => {
     if (permission !== 'granted') {
-      alert('请先授予通知权限');
+      toast.error('请先授予通知权限');
       return;
     }
     
@@ -25,6 +26,7 @@ export function PushNotificationDemo() {
         icon: '/icon-192x192.svg',
         tag: 'test-notification'
       });
+      toast.success('本地通知已发送！');
     } catch (swError) {
       // 降级到直接显示通知（适用于桌面浏览器）
       try {
@@ -33,9 +35,10 @@ export function PushNotificationDemo() {
           icon: '/icon-192x192.svg',
           tag: 'test-notification'
         });
+        toast.success('本地通知已发送！');
       } catch (notificationError) {
         console.error('无法显示通知:', notificationError);
-        alert('通知显示失败，请检查浏览器设置');
+        toast.error('通知显示失败，请检查浏览器设置');
       }
     }
   };
