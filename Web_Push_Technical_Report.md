@@ -59,7 +59,74 @@ Private Key:
 
 ### 3.2 数据流转流程
 
-![Web Push 数据流转泳道图](./web-push-flow.svg)
+```mermaid
+sequenceDiagram
+      participant User as 用户
+      participant Frontend as 前端应用
+      participant SW as Service Worker
+      participant Backend as 后端服务
+      participant PushService as 推送服务<br/>(FCM/APNs)
+      participant Browser as 浏览器进程
+
+      Note over User,Browser: 1. 初始化和订阅流程
+
+      User->>Frontend: 访问网站
+      Frontend->>SW: navigator.serviceWorker.register('/sw.js')
+      SW-->>Frontend: 注册成功
+
+      Frontend->>SW: registration.pushManager.getSubscription()
+      SW-->>Frontend: 返回现有订阅或null
+
+      alt 如果已有订阅
+          Frontend->>Frontend: 更新UI为已订阅状态
+      else 无现有订阅
+          Frontend->>Frontend: 显示订阅按钮
+          User->>Frontend: 点击订阅按钮
+          Frontend->>Browser: Notification.requestPermission()
+          Browser-->>Frontend: 返回权限状态
+
+          alt 权限已授予
+              Frontend->>SW: pushManager.subscribe(VAPID公钥)
+              SW->>PushService: 请求创建订阅
+              PushService-->>SW: 返回PushSubscription对象<br/>(endpoint + p256dh + auth)
+              SW-->>Frontend: 返回订阅对象
+
+              Frontend->>Backend: POST /api/subscribe<br/>(序列化订阅数据)
+              Backend->>Backend: 存储订阅信息到数据库<br/>(处理用户关联策略)
+              Backend-->>Frontend: 订阅成功确认
+          end
+      end
+
+      Note over User,Browser: 2. 推送发送流程
+
+      Backend->>Backend: 触发推送事件<br/>(新消息/系统更新等)
+      Backend->>Backend: 从数据库检索<br/>目标用户订阅信息
+
+      Backend->>PushService: HTTP POST 到 endpoint<br/>(VAPID私钥签名 + 加密payload)
+      Note over Backend,PushService: 使用web-push库<br/>VAPID认证 + 内容加密
+
+      PushService->>Browser: 路由消息到目标设备
+      Browser->>SW: 触发push事件<br/>(唤醒Service Worker)
+
+      SW->>SW: 解析推送数据
+      SW->>Browser: self.registration.showNotification()
+      Browser->>User: 显示系统通知
+
+      Note over User,Browser: 3. 用户交互流程
+
+      User->>Browser: 点击通知或按钮
+      Browser->>SW: 触发notificationclick事件
+      SW->>SW: 处理点击事件<br/>(获取action和URL)
+
+      alt 有自定义URL
+          SW->>Browser: clients.openWindow(customURL)
+      else 默认处理
+          SW->>Browser: clients.openWindow('/notification?params')
+      end
+
+      Browser->>Frontend: 打开/聚焦应用窗口
+      Frontend->>User: 显示相关页面内容
+```
 
 基于本项目的代码，完整的端到端数据流如下：
 
