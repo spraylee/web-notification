@@ -12,7 +12,7 @@ function getBrowserInfo() {
   const isIOS = /iPad|iPhone|iPod/.test(userAgent);
   const isStandalone = (window.navigator as any).standalone === true;
   const isInWebAppiOS = window.matchMedia('(display-mode: standalone)').matches;
-  
+
   return {
     isSafari,
     isIOS,
@@ -47,11 +47,11 @@ export function usePushNotification() {
     if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
       setIsSupported(true);
       setPermission(Notification.permission);
-      
+
       // Safari 兼容性检查
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
+
       if (isSafari) {
         console.log('检测到 Safari 浏览器');
         if (isIOS) {
@@ -134,7 +134,7 @@ export function usePushNotification() {
         await registration.showNotification('订阅成功!', {
           body: '你已成功订阅推送通知',
           icon: '/icon-192x192.svg',
-          tag: 'subscription-success'
+          tag: 'subscription-success',
         });
       } catch (swError) {
         // 降级到直接显示通知（适用于桌面浏览器）
@@ -161,16 +161,16 @@ export function usePushNotification() {
       try {
         // 1. 从浏览器取消订阅
         await subscription.unsubscribe();
-        
+
         // 2. 通知服务端删除订阅记录
         try {
           await trpcClient.subscription.delete.mutate({
-            endpoint: subscription.endpoint
+            endpoint: subscription.endpoint,
           });
         } catch (serverError) {
           console.warn('服务端删除订阅记录失败，但本地取消订阅成功:', serverError);
         }
-        
+
         setSubscription(null);
         setIsSubscribed(false);
         console.log('已取消订阅');
