@@ -3,12 +3,19 @@ import { createHash } from 'crypto';
 import { publicProcedure, router } from '../trpc.js';
 import webpush from 'web-push';
 
+const actionSchema = z.object({
+  action: z.string(),
+  title: z.string(),
+  url: z.string().optional(),
+});
+
 const notificationSchema = z.object({
   title: z.string(),
   body: z.string(),
   icon: z.string().optional(),
   badge: z.string().optional(),
   data: z.string().optional(),
+  actions: z.array(actionSchema).optional(),
 });
 
 function generateEndpointHash(endpoint: string): string {
@@ -20,7 +27,10 @@ export const notificationRouter = router({
     .input(notificationSchema)
     .mutation(async ({ input, ctx }) => {
       const notification = await ctx.prisma.notification.create({
-        data: input,
+        data: {
+          ...input,
+          actions: input.actions ? JSON.stringify(input.actions) : null,
+        },
       });
       return notification;
     }),
@@ -35,7 +45,10 @@ export const notificationRouter = router({
       const { endpoint, ...notificationData } = input;
 
       const notification = await ctx.prisma.notification.create({
-        data: notificationData,
+        data: {
+          ...notificationData,
+          actions: notificationData.actions ? JSON.stringify(notificationData.actions) : null,
+        },
       });
 
       let subscriptions;
@@ -66,6 +79,7 @@ export const notificationRouter = router({
         icon: notification.icon,
         badge: notification.badge,
         data: notification.data,
+        actions: notification.actions ? JSON.parse(notification.actions) : undefined,
       });
 
       // 配置 VAPID

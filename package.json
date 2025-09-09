@@ -4,7 +4,8 @@
   "private": true,
   "description": "Web push notification demo with monorepo structure",
   "scripts": {
-    "dev": "pnpm --parallel run dev",
+    "dev": "concurrently --kill-others --prefix-colors \"blue,magenta,green\" --prefix \"{name}\" \"pnpm server:dev\" \"pnpm web:dev\" \"pnpm admin:dev\"",
+    "dev:pnpm": "pnpm --parallel run dev",
     "build": "pnpm --recursive run build",
     "clean": "pnpm --recursive run clean",
     "format": "prettier --write .",
@@ -16,6 +17,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "prettier": "^3.2.5"
   },
   "packageManager": "pnpm@8.15.0"

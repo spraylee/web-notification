@@ -5,6 +5,8 @@ interface NotificationParams {
   title?: string;
   body?: string;
   timestamp?: string;
+  action?: string;
+  notificationId?: string;
 }
 
 export function NotificationDetail() {
@@ -17,9 +19,11 @@ export function NotificationDetail() {
     const title = urlParams.get('title') || undefined;
     const body = urlParams.get('body') || undefined;
     const timestamp = urlParams.get('timestamp') || undefined;
+    const action = urlParams.get('action') || undefined;
+    const notificationId = urlParams.get('notificationId') || undefined;
     
-    if (title || body) {
-      setParams({ title, body, timestamp });
+    if (title || body || action) {
+      setParams({ title, body, timestamp, action, notificationId });
       setIsFromNotification(true);
     }
   }, []);
@@ -85,16 +89,29 @@ export function NotificationDetail() {
                 {params.body || '无内容'}
               </p>
               
-              {params.timestamp && (
-                <div className="text-sm text-gray-500">
-                  <span className="inline-flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
-                    接收时间: {dayjs(params.timestamp).format('YYYY-MM-DD HH:mm:ss')}
-                  </span>
-                </div>
-              )}
+              <div className="space-y-2">
+                {params.timestamp && (
+                  <div className="text-sm text-gray-500">
+                    <span className="inline-flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      接收时间: {dayjs(params.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+                    </span>
+                  </div>
+                )}
+                
+                {params.action && (
+                  <div className="text-sm">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clipRule="evenodd" />
+                      </svg>
+                      触发操作: {params.action}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -118,13 +135,16 @@ export function NotificationDetail() {
         </div>
 
         {/* 提示信息 */}
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className={`p-4 rounded-lg ${params.action ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'} border`}>
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <svg className={`w-5 h-5 mr-2 ${params.action ? 'text-blue-600' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <p className="text-sm text-green-700">
-              您已成功接收并查看了这条推送通知！
+            <p className={`text-sm ${params.action ? 'text-blue-700' : 'text-green-700'}`}>
+              {params.action 
+                ? `您通过点击 "${params.action}" 按钮访问了这条通知！` 
+                : '您已成功接收并查看了这条推送通知！'
+              }
             </p>
           </div>
         </div>

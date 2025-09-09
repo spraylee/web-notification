@@ -11,23 +11,29 @@ self.addEventListener('push', function (event) {
       url: '/',
     };
 
+    // 使用从后端传来的 actions，如果没有则使用默认的
+    const actions = data.actions || [
+      {
+        action: 'open',
+        title: '打开应用',
+      },
+      {
+        action: 'close',
+        title: '关闭',
+      },
+    ];
+
     const options = {
       body: data.body,
       icon: data.icon || '/icon-192x192.svg',
       badge: data.badge || '/icon.svg',
       vibrate: [100, 50, 100],
-      data: notificationData, // 传递完整数据
+      data: { ...notificationData, actions }, // 将 actions 也存储到 data 中
       requireInteraction: true, // 让通知持久显示
-      actions: [
-        {
-          action: 'open',
-          title: '打开应用',
-        },
-        {
-          action: 'close',
-          title: '关闭',
-        },
-      ],
+      actions: actions.map(action => ({
+        action: action.action,
+        title: action.title,
+      })),
     };
 
     event.waitUntil(self.registration.showNotification(data.title, options));
@@ -35,17 +41,35 @@ self.addEventListener('push', function (event) {
 });
 
 self.addEventListener('notificationclick', function (event) {
-  console.log('通知被点击:', event.notification.title);
+  console.log('通知被点击:', event.notification.title, 'Action:', event.action);
   event.notification.close();
 
+  // 获取通知数据和 actions
+  const notificationData = event.notification.data || {};
+  const actions = notificationData.actions || [];
+  
+  // 如果是 close action，直接返回
   if (event.action === 'close') {
-    // 仅关闭通知，不做其他操作
     return;
   }
 
-  // 获取通知数据
-  const notificationData = event.notification.data || {};
-  const targetUrl = `/notification?title=${encodeURIComponent(notificationData.title || '')}&body=${encodeURIComponent(notificationData.body || '')}&timestamp=${encodeURIComponent(notificationData.timestamp || '')}`;
+  // 查找被点击的 action
+  const clickedAction = actions.find(action => action.action === event.action);
+  let targetUrl;
+
+  if (clickedAction && clickedAction.url) {
+    // 如果 action 有自定义 URL，使用它
+    targetUrl = clickedAction.url;
+    // 添加 action 参数以便页面知道是通过哪个 action 访问的
+    const separator = targetUrl.includes('?') ? '&' : '?';
+    targetUrl += `${separator}action=${encodeURIComponent(event.action)}&notificationId=${encodeURIComponent(notificationData.title || '')}`;
+  } else if (event.action) {
+    // 如果有 action 但没有自定义 URL，跳转到通知页面并包含 action 信息
+    targetUrl = `/notification?title=${encodeURIComponent(notificationData.title || '')}&body=${encodeURIComponent(notificationData.body || '')}&timestamp=${encodeURIComponent(notificationData.timestamp || '')}&action=${encodeURIComponent(event.action)}`;
+  } else {
+    // 点击通知本身（不是按钮），跳转到通知页面
+    targetUrl = `/notification?title=${encodeURIComponent(notificationData.title || '')}&body=${encodeURIComponent(notificationData.body || '')}&timestamp=${encodeURIComponent(notificationData.timestamp || '')}`;
+  }
 
   event.waitUntil(
     // 优先尝试聚焦现有窗口
