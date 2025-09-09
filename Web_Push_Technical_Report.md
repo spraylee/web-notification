@@ -59,6 +59,8 @@ Private Key:
 
 ### 3.2 数据流转流程
 
+![Web Push 数据流转泳道图](./web-push-flow.svg)
+
 基于本项目的代码，完整的端到端数据流如下：
 
 1.  **(前端) 注册 Service Worker 并检查现有订阅**:
