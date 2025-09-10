@@ -14,6 +14,7 @@ const notificationSchema = z.object({
   body: z.string(),
   icon: z.string().optional(),
   badge: z.string().optional(),
+  image: z.string().optional(),
   data: z.string().optional(),
   actions: z.array(actionSchema).optional(),
 });
@@ -78,6 +79,7 @@ export const notificationRouter = router({
         body: notification.body,
         icon: notification.icon,
         badge: notification.badge,
+        image: notification.image,
         data: notification.data,
         actions: notification.actions ? JSON.parse(notification.actions) : undefined,
       });

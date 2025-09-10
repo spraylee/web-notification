@@ -39,6 +39,7 @@ model Notification {
   body      String
   icon      String?
   badge     String?
+  image     String?   @db.Text // 大图URL
   data      String?
   actions   String?   @db.Text // JSON string of actions array
   sent      Boolean   @default(false)

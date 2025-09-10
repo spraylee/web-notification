@@ -22,6 +22,7 @@ export function NotificationEditor({ isOpen, onClose, endpoint }: NotificationEd
   const [title, setTitle] = useState('Hello');
   const [body, setBody] = useState('This is a test notification');
   const [icon, setIcon] = useState('/icon-192x192.svg');
+  const [image, setImage] = useState('');
   const [actions, setActions] = useState<NotificationAction[]>([
     { action: 'open', title: '打开应用', url: '/' },
     { action: 'close', title: '关闭' }
@@ -40,7 +41,7 @@ export function NotificationEditor({ isOpen, onClose, endpoint }: NotificationEd
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (title && body) {
-      sendNotification.mutate({ title, body, icon, endpoint, actions });
+      sendNotification.mutate({ title, body, icon, image: image || undefined, endpoint, actions });
     }
   };
 
@@ -99,6 +100,17 @@ export function NotificationEditor({ isOpen, onClose, endpoint }: NotificationEd
             value={icon}
             onChange={(e) => setIcon(e.target.value)}
             placeholder="图标 URL"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="image">大图 URL (可选)</Label>
+          <Input
+            id="image"
+            type="text"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="通知大图 URL，如：https://example.com/image.jpg"
           />
         </div>
 

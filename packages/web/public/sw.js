@@ -27,6 +27,7 @@ self.addEventListener('push', function (event) {
       body: data.body,
       icon: data.icon || '/icon-192x192.svg',
       badge: data.badge || '/icon.svg',
+      image: data.image, // 添加大图支持
       vibrate: [100, 50, 100],
       data: { ...notificationData, actions }, // 将 actions 也存储到 data 中
       requireInteraction: true, // 让通知持久显示
