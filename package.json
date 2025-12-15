@@ -13,12 +13,9 @@
     "admin:dev": "pnpm --filter admin dev --port 5174",
     "server:dev": "pnpm --filter server dev"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
     "concurrently": "^8.2.2",
     "prettier": "^3.2.5"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@9.0.0"
 }

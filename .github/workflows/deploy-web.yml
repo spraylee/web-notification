@@ -1,0 +1,75 @@
+name: Deploy Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-web.yml"
+      - "packages/web/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_NAME: web-notification
+      DEPLOY_PATH: /data/apps/web-notification
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter web build
+
+      - name: Package build
+        run: |
+          cd packages/web/dist
+          tar -czvf ../../../web.tar.gz .
+
+      - name: Deploy to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "web.tar.gz"
+          target: "${{ env.DEPLOY_PATH }}"
+
+      - name: Extract and restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+            rm -rf web.bak
+            [ -d web ] && mv web web.bak
+            mkdir -p web
+            tar -xzf web.tar.gz -C web
+            rm -f web.tar.gz
+            echo "Web deployed successfully!"
