@@ -1,6 +1,7 @@
 # 阶段 1: 基础镜像
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9
+RUN apk add --no-cache openssl \
+    && npm install -g pnpm@9
 
 # 阶段 2: 依赖安装
 FROM base AS deps
@@ -34,6 +35,7 @@ RUN pnpm --filter server build
 
 # 阶段 4: 运行
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app/packages/server
 
 ENV NODE_ENV=production
